@@ -1,0 +1,15 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sirita_rps_user,sirita.rps.user,model_sirita_rps,base.group_user,1,1,1,0
+access_sirita_rps_admin,sirita.rps.admin,model_sirita_rps,base.group_system,1,1,1,1
+access_sirita_rps_cpmk_user,sirita.rps.cpmk.user,model_sirita_rps_cpmk,base.group_user,1,1,1,1
+access_sirita_rps_cpmk_admin,sirita.rps.cpmk.admin,model_sirita_rps_cpmk,base.group_system,1,1,1,1
+access_sirita_rps_weekly_user,sirita.rps.weekly.user,model_sirita_rps_weekly,base.group_user,1,1,1,1
+access_sirita_rps_weekly_admin,sirita.rps.weekly.admin,model_sirita_rps_weekly,base.group_system,1,1,1,1
+access_sirita_rps_metode_user,sirita.rps.metode.user,model_sirita_rps_metode,base.group_user,1,0,0,0
+access_sirita_rps_metode_admin,sirita.rps.metode.admin,model_sirita_rps_metode,base.group_system,1,1,1,1
+access_sirita_rps_course_user,sirita.rps.course.user,model_sirita_rps_course,base.group_user,1,1,1,1
+access_sirita_rps_course_admin,sirita.rps.course.admin,model_sirita_rps_course,base.group_system,1,1,1,1
+access_sirita_rps_cpl_user,sirita.rps.cpl.user,model_sirita_rps_cpl,base.group_user,1,1,1,1
+access_sirita_rps_cpl_admin,sirita.rps.cpl.admin,model_sirita_rps_cpl,base.group_system,1,1,1,1
+access_sirita_rps_kurikulum_user,sirita.rps.kurikulum.user,model_sirita_rps_kurikulum,base.group_user,1,1,1,1
+access_sirita_rps_kurikulum_admin,sirita.rps.kurikulum.admin,model_sirita_rps_kurikulum,base.group_system,1,1,1,1

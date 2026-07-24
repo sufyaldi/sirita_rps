@@ -1,0 +1,166 @@
+// Custom SCSS Styles for SIRITA RPS & OBE Portal
+// Targets portal elements to provide a modern, high-end, emerald-themed user experience.
+
+// Colors Variables
+$emerald-primary: #059669;
+$emerald-hover: #10b981;
+$emerald-light: #e6f4ea;
+$emerald-light-border: #a7f3d0;
+$slate-primary: #0f172a;
+$slate-secondary: #475569;
+$slate-light: #f8fafc;
+$white: #ffffff;
+
+// Card Custom Styles
+.sirita-rps-portal-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(0, 0, 0, 0.05) !important;
+    background: $white;
+    
+    &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(5, 150, 105, 0.08) !important;
+        border-color: $emerald-light-border !important;
+        background-color: $slate-light !important;
+    }
+}
+
+.text-emerald-primary {
+    color: $emerald-primary !important;
+}
+
+.text-emerald {
+    color: $emerald-primary !important;
+}
+
+.bg-emerald-light {
+    background-color: $emerald-light !important;
+}
+
+.border-emerald {
+    border-color: $emerald-primary !important;
+}
+
+.bg-emerald {
+    background-color: $emerald-primary !important;
+}
+
+.badge-status {
+    font-weight: 600;
+    padding: 0.35em 0.8em;
+}
+
+.text-bg-emerald {
+    background-color: $emerald-primary !important;
+    color: $white !important;
+}
+
+// Custom Buttons
+.btn-emerald {
+    background-color: $emerald-primary !important;
+    color: $white !important;
+    border: 1px solid $emerald-primary !important;
+    transition: all 0.2s ease-in-out;
+    
+    &:hover {
+        background-color: $emerald-hover !important;
+        border-color: $emerald-hover !important;
+        box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
+    }
+}
+
+.btn-emerald-outline {
+    background-color: transparent !important;
+    color: $emerald-primary !important;
+    border: 1.5px solid $emerald-primary !important;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+    
+    &:hover {
+        background-color: $emerald-primary !important;
+        color: $white !important;
+        box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15);
+    }
+}
+
+// Custom Table Design
+.sirita-custom-table {
+    thead {
+        background-color: $slate-light;
+        tr th {
+            color: $slate-secondary;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            padding: 1rem 1.25rem;
+            border-bottom: 1.5px solid rgba(0,0,0,0.06);
+        }
+    }
+    
+    tbody {
+        tr {
+            transition: all 0.2s ease;
+            td {
+                padding: 1.1rem 1.25rem;
+                color: $slate-primary;
+                border-bottom: 1px solid rgba(0,0,0,0.04);
+            }
+            
+            &:hover {
+                background-color: rgba(5, 150, 105, 0.015);
+            }
+        }
+    }
+}
+
+// Custom Pill Navigation
+.custom-emerald-pills {
+    background: rgba(0, 0, 0, 0.03);
+    padding: 6px;
+    border-radius: 50px;
+    display: inline-flex;
+    
+    .nav-item {
+        .nav-link {
+            color: $slate-secondary;
+            font-weight: 500;
+            font-size: 0.9rem;
+            background: transparent;
+            border: none;
+            transition: all 0.2s ease;
+            
+            &.active {
+                background-color: $emerald-primary !important;
+                color: $white !important;
+                box-shadow: 0 4px 10px rgba(5, 150, 105, 0.15);
+            }
+            
+            &:hover:not(.active) {
+                color: $emerald-primary;
+                background-color: rgba(5, 150, 105, 0.05);
+            }
+        }
+    }
+}
+
+// Layout helper styles
+.line-height-relaxed {
+    line-height: 1.7;
+}
+
+.text-slate-800 {
+    color: $slate-primary !important;
+}
+
+.text-slate-500 {
+    color: $slate-secondary !important;
+}
+
+.text-slate-400 {
+    color: #94a3b8 !important;
+}
+
+.bg-light {
+    background-color: $slate-light !important;
+}

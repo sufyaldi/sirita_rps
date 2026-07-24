@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tree View -->
+    <record id="view_sirita_rps_tree" model="ir.ui.view">
+        <field name="name">sirita.rps.tree</field>
+        <field name="model">sirita.rps</field>
+        <field name="arch" type="xml">
+            <list string="Rencana Pembelajaran Semester">
+                <field name="name"/>
+                <field name="matkul_id"/>
+                <field name="kode_mk"/>
+                <field name="sks"/>
+                <field name="prodi_id"/>
+                <field name="koordinator_id"/>
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-warning="state == 'submitted'" decoration-success="state == 'approved'" decoration-danger="state == 'rejected'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_sirita_rps_form" model="ir.ui.view">
+        <field name="name">sirita.rps.form</field>
+        <field name="model">sirita.rps</field>
+        <field name="arch" type="xml">
+            <form string="RPS Berbasis OBE">
+                <header>
+                    <button name="action_submit" type="object" string="Ajukan Validasi" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_approve" type="object" string="Setujui" class="btn-success" invisible="state != 'submitted'"/>
+                    <button name="action_reject" type="object" string="Tolak" class="btn-danger" invisible="state != 'submitted'"/>
+                    <button name="action_draft" type="object" string="Set ke Draf" invisible="state not in ['approved', 'rejected']"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="prodi_id" options="{'no_create': True}" readonly="state != 'draft'"/>
+                            <field name="kurikulum_id" options="{'no_create': True}" readonly="state != 'draft'"/>
+                            <field name="matkul_id" domain="[('prodi_id', '=', prodi_id), ('kurikulum_id', '=', kurikulum_id)]" options="{'no_create': True}" readonly="state != 'draft'"/>
+                            <field name="kode_mk"/>
+                            <field name="sks"/>
+                        </group>
+                        <group>
+                            <field name="koordinator_id" widget="many2one_avatar_user" readonly="state != 'draft'"/>
+                            <field name="dosen_ids" widget="many2many_tags_avatar" readonly="state != 'draft'"/>
+                            <field name="tanggal_penyusunan" readonly="state != 'draft'"/>
+                            <field name="metode_ids" widget="many2many_tags" readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Deskripsi &amp; Pustaka">
+                            <group string="Deskripsi">
+                                <field name="deskripsi" placeholder="Tuliskan gambaran umum mata kuliah..." nolabel="1" readonly="state != 'draft'"/>
+                            </group>
+                            <group string="Media Pembelajaran">
+                                <group>
+                                    <field name="media_software" readonly="state != 'draft'"/>
+                                </group>
+                                <group>
+                                    <field name="media_hardware" readonly="state != 'draft'"/>
+                                </group>
+                            </group>
+                            <group string="Referensi Pustaka">
+                                <field name="pustaka_utama" placeholder="Referensi Utama..." readonly="state != 'draft'"/>
+                                <field name="pustaka_pendukung" placeholder="Referensi Pendukung..." readonly="state != 'draft'"/>
+                            </group>
+                        </page>
+                        <page string="Capaian Pembelajaran (CPMK)">
+                            <field name="cpmk_ids" readonly="state != 'draft'">
+                                <list editable="bottom">
+                                    <field name="kode"/>
+                                    <field name="name"/>
+                                    <field name="bobot"/>
+                                    <field name="cpl_ids" widget="many2many_tags"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Rencana Pertemuan Mingguan">
+                            <field name="weekly_ids" readonly="state != 'draft'">
+                                <list editable="bottom">
+                                    <field name="week"/>
+                                    <field name="sub_cpmk"/>
+                                    <field name="bahan_kajian"/>
+                                    <field name="metode_pembelajaran"/>
+                                    <field name="indikator"/>
+                                    <field name="kriteria"/>
+                                    <field name="bobot"/>
+                                    <field name="cpmk_ids" widget="many2many_tags" domain="[('rps_id', '=', parent.id)]"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_sirita_rps" model="ir.actions.act_window">
+        <field name="name">Rencana Pembelajaran Semester</field>
+        <field name="res_model">sirita.rps</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Buat RPS Berbasis OBE pertama Anda.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_sirita_rps_root" name="SIRITA RPS" sequence="25"/>
+    <menuitem id="menu_sirita_rps_list" name="Rencana Pembelajaran" parent="menu_sirita_rps_root" action="action_sirita_rps" sequence="10"/>
+</odoo>

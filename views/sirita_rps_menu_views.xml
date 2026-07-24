@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Course (Mata Kuliah) Views -->
+    <record id="view_sirita_rps_course_tree" model="ir.ui.view">
+        <field name="name">sirita.rps.course.tree</field>
+        <field name="model">sirita.rps.course</field>
+        <field name="arch" type="xml">
+            <list string="Daftar Mata Kuliah">
+                <field name="kode"/>
+                <field name="name"/>
+                <field name="sks"/>
+                <field name="prodi_id"/>
+                <field name="kurikulum_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sirita_rps_course_form" model="ir.ui.view">
+        <field name="name">sirita.rps.course.form</field>
+        <field name="model">sirita.rps.course</field>
+        <field name="arch" type="xml">
+            <form string="Form Mata Kuliah">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="kode"/>
+                            <field name="name"/>
+                        </group>
+                        <group>
+                            <field name="sks"/>
+                            <field name="prodi_id" options="{'no_create': True}"/>
+                            <field name="kurikulum_id" options="{'no_create': True}"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sirita_rps_course" model="ir.actions.act_window">
+        <field name="name">Mata Kuliah</field>
+        <field name="res_model">sirita.rps.course</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Buat data Mata Kuliah pertama Anda.
+            </p>
+        </field>
+    </record>
+
+    <!-- CPL (Capaian Pembelajaran Lulusan) Views -->
+    <record id="view_sirita_rps_cpl_tree" model="ir.ui.view">
+        <field name="name">sirita.rps.cpl.tree</field>
+        <field name="model">sirita.rps.cpl</field>
+        <field name="arch" type="xml">
+            <list string="Daftar CPL">
+                <field name="kode"/>
+                <field name="name"/>
+                <field name="prodi_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sirita_rps_cpl_form" model="ir.ui.view">
+        <field name="name">sirita.rps.cpl.form</field>
+        <field name="model">sirita.rps.cpl</field>
+        <field name="arch" type="xml">
+            <form string="Form CPL">
+                <sheet>
+                    <group>
+                        <field name="kode"/>
+                        <field name="name"/>
+                        <field name="prodi_id" options="{'no_create': True}"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sirita_rps_cpl" model="ir.actions.act_window">
+        <field name="name">Capaian Pembelajaran Lulusan (CPL)</field>
+        <field name="res_model">sirita.rps.cpl</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Buat data CPL pertama Anda.
+            </p>
+        </field>
+    </record>
+
+    <!-- Metode Pembelajaran Views -->
+    <record id="view_sirita_rps_metode_tree" model="ir.ui.view">
+        <field name="name">sirita.rps.metode.tree</field>
+        <field name="model">sirita.rps.metode</field>
+        <field name="arch" type="xml">
+            <list string="Metode Pembelajaran">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="description"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sirita_rps_metode_form" model="ir.ui.view">
+        <field name="name">sirita.rps.metode.form</field>
+        <field name="model">sirita.rps.metode</field>
+        <field name="arch" type="xml">
+            <form string="Form Metode Pembelajaran">
+                <sheet>
+                    <group>
+                        <field name="code"/>
+                        <field name="name"/>
+                        <field name="description"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sirita_rps_metode" model="ir.actions.act_window">
+        <field name="name">Metode Pembelajaran OBE</field>
+        <field name="res_model">sirita.rps.metode</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Kurikulum Views -->
+    <record id="view_sirita_rps_kurikulum_tree" model="ir.ui.view">
+        <field name="name">sirita.rps.kurikulum.tree</field>
+        <field name="model">sirita.rps.kurikulum</field>
+        <field name="arch" type="xml">
+            <list string="Daftar Kurikulum">
+                <field name="name"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sirita_rps_kurikulum_form" model="ir.ui.view">
+        <field name="name">sirita.rps.kurikulum.form</field>
+        <field name="model">sirita.rps.kurikulum</field>
+        <field name="arch" type="xml">
+            <form string="Form Kurikulum">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sirita_rps_kurikulum" model="ir.actions.act_window">
+        <field name="name">Tahun Kurikulum</field>
+        <field name="res_model">sirita.rps.kurikulum</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Config Menu Parent and Submenus -->
+    <menuitem id="menu_sirita_rps_config" name="Konfigurasi" parent="menu_sirita_rps_root" sequence="100"/>
+    <menuitem id="menu_sirita_rps_courses" name="Mata Kuliah" parent="menu_sirita_rps_config" action="action_sirita_rps_course" sequence="10"/>
+    <menuitem id="menu_sirita_rps_cpl" name="CPL" parent="menu_sirita_rps_config" action="action_sirita_rps_cpl" sequence="20"/>
+    <menuitem id="menu_sirita_rps_kurikulum" name="Tahun Kurikulum" parent="menu_sirita_rps_config" action="action_sirita_rps_kurikulum" sequence="25"/>
+    <menuitem id="menu_sirita_rps_metode" name="Metode Pembelajaran" parent="menu_sirita_rps_config" action="action_sirita_rps_metode" sequence="30"/>
+</odoo>

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Standard Learning Methods for OBE -->
+    <record id="metode_pbl" model="sirita.rps.metode">
+        <field name="name">Problem-Based Learning (PBL)</field>
+        <field name="code">PBL</field>
+        <field name="description">Metode pembelajaran yang berpusat pada siswa di mana siswa belajar tentang suatu subjek melalui pengalaman memecahkan masalah yang terbuka.</field>
+    </record>
+
+    <record id="metode_pjbl" model="sirita.rps.metode">
+        <field name="name">Project-Based Learning (PjBL)</field>
+        <field name="code">PjBL</field>
+        <field name="description">Metode pembelajaran aktif yang berpusat pada siswa yang menggunakan proyek-proyek dunia nyata untuk merangsang pembelajaran mandiri.</field>
+    </record>
+
+    <record id="metode_cbl" model="sirita.rps.metode">
+        <field name="name">Case-Based Learning (CBL)</field>
+        <field name="code">CBL</field>
+        <field name="description">Metode pembelajaran berbasis kasus untuk melatih pemikiran kritis dan pemecahan masalah secara terapan.</field>
+    </record>
+
+    <record id="metode_dl" model="sirita.rps.metode">
+        <field name="name">Discovery Learning</field>
+        <field name="code">DL</field>
+        <field name="description">Metode pembelajaran di mana siswa membangun pengetahuan secara mandiri dengan menyelidiki hubungan-hubungan baru.</field>
+    </record>
+
+    <record id="metode_ibl" model="sirita.rps.metode">
+        <field name="name">Inquiry-Based Learning</field>
+        <field name="code">IBL</field>
+        <field name="description">Bentuk pembelajaran aktif yang dimulai dengan mengajukan pertanyaan, masalah, atau skenario.</field>
+    </record>
+
+    <record id="metode_sgd" model="sirita.rps.metode">
+        <field name="name">Small Group Discussion</field>
+        <field name="code">SGD</field>
+        <field name="description">Diskusi kelompok kecil untuk bertukar ide dan pemecahan masalah bersama.</field>
+    </record>
+
+    <record id="metode_fgd" model="sirita.rps.metode">
+        <field name="name">Focus Group Discussion (FGD)</field>
+        <field name="code">FGD</field>
+        <field name="description">Diskusi terarah yang dipandu oleh moderator untuk mengeksplorasi suatu topik secara mendalam.</field>
+    </record>
+
+    <record id="metode_rps" model="sirita.rps.metode">
+        <field name="name">Role Playing &amp; Simulation</field>
+        <field name="code">RPS</field>
+        <field name="description">Metode simulasi peran untuk memahami perspektif praktis dan situasi kerja nyata.</field>
+    </record>
+
+    <record id="metode_coop" model="sirita.rps.metode">
+        <field name="name">Cooperative Learning</field>
+        <field name="code">Coop</field>
+        <field name="description">Pembelajaran kooperatif yang menekankan kerja sama tim yang terstruktur.</field>
+    </record>
+
+    <record id="metode_collab" model="sirita.rps.metode">
+        <field name="name">Collaborative Learning</field>
+        <field name="code">Collab</field>
+        <field name="description">Pembelajaran kolaboratif kelompok secara dinamis dan fleksibel.</field>
+    </record>
+
+    <record id="metode_ci" model="sirita.rps.metode">
+        <field name="name">Contextual Instruction</field>
+        <field name="code">CI</field>
+        <field name="description">Metode mengaitkan materi akademik dengan konteks kehidupan sehari-hari.</field>
+    </record>
+
+    <record id="metode_sdl" model="sirita.rps.metode">
+        <field name="name">Self-Directed Learning</field>
+        <field name="code">SDL</field>
+        <field name="description">Pembelajaran mandiri yang berfokus pada inisiatif personal mahasiswa.</field>
+    </record>
+
+    <record id="metode_tps" model="sirita.rps.metode">
+        <field name="name">Think-Pair-Share (TPS)</field>
+        <field name="code">TPS</field>
+        <field name="description">Metode berpikir, berpasangan, lalu membagikan hasil pemikiran kepada kelompok.</field>
+    </record>
+
+    <record id="metode_jigsaw" model="sirita.rps.metode">
+        <field name="name">Jigsaw</field>
+        <field name="code">Jigsaw</field>
+        <field name="description">Metode pembelajaran kooperatif di mana tiap anggota tim bertanggung jawab atas bagian materi tertentu.</field>
+    </record>
+</odoo>

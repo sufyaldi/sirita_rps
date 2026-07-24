@@ -1,0 +1,848 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Add breadcrumbs for RPS pages -->
+    <template id="portal_layout_sirita_rps" inherit_id="portal.portal_breadcrumbs" priority="25">
+        <xpath expr="//ol[hasclass('breadcrumb')]" position="inside">
+            <li t-if="page_name in ['rps_portal_list', 'rps_portal_detail']" class="breadcrumb-item">
+                <a href="/my/rps">Dashboard RPS</a>
+            </li>
+            <li t-if="page_name == 'rps_portal_detail'" class="breadcrumb-item active">
+                <t t-esc="rps.matkul_id.name"/>
+            </li>
+        </xpath>
+    </template>
+
+    <!-- Add menu entry to Customer Portal Home -->
+    <template id="portal_my_home_sirita_rps" inherit_id="portal.portal_my_home" priority="25">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+            <t t-set="is_dosen" t-value="request.env['hr.employee'].sudo().search_count([('user_id', '=', request.env.user.id)], limit=1)"/>
+            <t t-if="is_dosen">
+                <a class="o_portal_doc_link list-group-item list-group-item-action d-flex align-items-center justify-content-between sirita-rps-portal-card" href="/my/rps" title="RPS &amp; OBE Manager">
+                    <div>
+                        <i class="fa fa-book me-2 text-emerald-primary"/>
+                        <span>Penyusunan RPS &amp; OBE</span>
+                    </div>
+                    <span class="badge rounded-pill text-bg-emerald"><t t-esc="rps_count"/> RPS</span>
+                </a>
+            </t>
+        </xpath>
+    </template>
+
+    <!-- No Lecturer Found Template -->
+    <template id="portal_no_lecturer_found" name="Dosen Belum Terhubung">
+        <t t-call="portal.portal_layout">
+            <div class="container mt-5 text-center">
+                <div class="card shadow border-0 rounded-4 p-5 max-w-lg mx-auto bg-white">
+                    <div class="text-danger mb-4">
+                        <i class="fa fa-exclamation-triangle fa-4x animate-bounce"/>
+                    </div>
+                    <h3 class="fw-bold text-slate-800">Akun Dosen Belum Tertaut</h3>
+                    <p class="text-slate-500 mb-4">Maaf, akun login Anda belum terhubung dengan data pegawai/dosen di database. Silakan hubungi admin akademik untuk melakukan konfigurasi.</p>
+                    <a href="/my" class="btn btn-emerald rounded-pill px-4 py-2">
+                        <i class="fa fa-arrow-left me-2"/> Kembali ke Portal
+                    </a>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- RPS List Template -->
+    <template id="portal_my_rps_list" name="My RPS List">
+        <t t-call="portal.portal_layout">
+            <t t-set="my_details" t-value="True"/>
+            <div id="sirita_rps_list_container" class="container mt-4 mb-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2 class="fw-bold text-slate-800 mb-1">Rencana Pembelajaran Semester (RPS)</h2>
+                        <p class="text-slate-500 small mb-0">Kelola dan susun kurikulum berbasis luaran (OBE) secara mandiri.</p>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-emerald rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#createRpsModal">
+                            <i class="fa fa-plus me-2"/>Buat RPS Baru
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Error Messages -->
+                <div t-if="error" class="alert alert-danger alert-dismissible fade show rounded-3" role="alert">
+                    <i class="fa fa-exclamation-circle me-2"/>
+                    <t t-if="error == 'missing_fields'">Mohon pilih Program Studi, Kurikulum, dan Mata Kuliah terlebih dahulu.</t>
+                    <t t-elif="error == 'invalid_matkul'">Mata kuliah tidak valid.</t>
+                    <t t-elif="error == 'no_lecturer'">Akun Dosen Anda belum terdaftar secara sah.</t>
+                    <t t-elif="error == 'duplicate_rps'">Dokumen RPS untuk mata kuliah ini sudah pernah dibuat.</t>
+                    <t t-else="">Terjadi kesalahan saat memproses pembuatan RPS.</t>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+
+                <!-- Create RPS Modal -->
+                <div class="modal fade" id="createRpsModal" tabindex="-1" aria-labelledby="createRpsModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content rounded-4 border-0 shadow">
+                            <form action="/my/rps/create" method="post">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <div class="modal-header border-0 pb-0">
+                                    <h5 class="modal-title fw-bold text-slate-800" id="createRpsModalLabel">Buat RPS Baru</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body py-4">
+                                    <div class="mb-3">
+                                        <label for="prodi_id" class="form-label fw-semibold text-slate-700">Program Studi</label>
+                                        <select class="form-select rounded-3 border-slate-200" id="prodi_id" name="prodi_id" required="required">
+                                            <option value="">-- Pilih Program Studi --</option>
+                                            <t t-foreach="prodis" t-as="p">
+                                                <option t-att-value="p.id"><t t-esc="p.display_name"/></option>
+                                            </t>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="kurikulum_id" class="form-label fw-semibold text-slate-700">Tahun Kurikulum</label>
+                                        <select class="form-select rounded-3 border-slate-200" id="kurikulum_id" name="kurikulum_id" required="required">
+                                            <option value="">-- Pilih Kurikulum --</option>
+                                            <t t-foreach="kurikulums" t-as="k">
+                                                <option t-att-value="k.id"><t t-esc="k.name"/></option>
+                                            </t>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="matkul_id" class="form-label fw-semibold text-slate-700">Mata Kuliah</label>
+                                        <select class="form-select rounded-3 border-slate-200" id="matkul_id" name="matkul_id" required="required">
+                                            <option value="">-- Pilih Mata Kuliah --</option>
+                                            <t t-foreach="courses" t-as="c">
+                                                <option t-att-value="c.id" t-att-data-prodi-id="c.prodi_id.id" t-att-data-kurikulum-id="c.kurikulum_id.id"><t t-esc="c.kode"/> - <t t-esc="c.name"/> (<t t-esc="c.sks"/> SKS)</option>
+                                            </t>
+                                        </select>
+                                    </div>
+                                    <div class="mb-0">
+                                        <label for="name" class="form-label fw-semibold text-slate-700">Nama Dokumen RPS (Opsional)</label>
+                                        <input type="text" class="form-control rounded-3 border-slate-200" id="name" name="name" placeholder="Contoh: RPS OBE Pemrograman Web II"/>
+                                        <div class="form-text small text-slate-400">Jika dikosongkan, nama default akan otomatis disesuaikan dengan mata kuliah.</div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer border-0 pt-0">
+                                    <button type="button" class="btn btn-slate rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                                    <button type="submit" class="btn btn-emerald rounded-pill px-4">Buat Dokumen</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <script type="text/javascript">
+                    document.addEventListener('DOMContentLoaded', function() {
+                        var prodiSelect = document.getElementById('prodi_id');
+                        var kurikulumSelect = document.getElementById('kurikulum_id');
+                        var matkulSelect = document.getElementById('matkul_id');
+                        
+                        if (prodiSelect &amp;&amp; kurikulumSelect &amp;&amp; matkulSelect) {
+                            var originalOptions = Array.from(matkulSelect.options);
+                            
+                            function filterMatkul() {
+                                var selectedProdi = prodiSelect.value;
+                                var selectedKurikulum = kurikulumSelect.value;
+                                
+                                matkulSelect.innerHTML = '';
+                                matkulSelect.appendChild(originalOptions[0]); // Keep default placeholder
+                                
+                                originalOptions.forEach(function(opt) {
+                                    if (opt.value === '') return;
+                                    var prodiId = opt.getAttribute('data-prodi-id');
+                                    var kurikulumId = opt.getAttribute('data-kurikulum-id');
+                                    
+                                    var matchProdi = !selectedProdi || prodiId === selectedProdi;
+                                    var matchKurikulum = !selectedKurikulum || kurikulumId === selectedKurikulum;
+                                    
+                                    if (matchProdi &amp;&amp; matchKurikulum) {
+                                        matkulSelect.appendChild(opt);
+                                    }
+                                });
+                            }
+                            
+                            prodiSelect.addEventListener('change', filterMatkul);
+                            kurikulumSelect.addEventListener('change', filterMatkul);
+                        }
+                    });
+                </script>
+
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 sirita-custom-table">
+                            <thead>
+                                <tr>
+                                    <th>KODE MK</th>
+                                    <th>NAMA MATA KULIAH</th>
+                                    <th>SKS</th>
+                                    <th>PRODI</th>
+                                    <th>TANGGAL UPDATE</th>
+                                    <th class="text-center">STATUS</th>
+                                    <th class="text-end pe-4">AKSI</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="rps_records" t-as="record">
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-emerald-light text-emerald fw-bold"><t t-esc="record.kode_mk"/></span>
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold text-slate-800"><t t-esc="record.matkul_id.name"/></div>
+                                            <div class="text-slate-400 small"><t t-esc="record.name"/></div>
+                                        </td>
+                                        <td><t t-esc="record.sks"/> SKS</td>
+                                        <td><t t-esc="record.prodi_id.name"/></td>
+                                        <td><span t-field="record.tanggal_penyusunan" t-options='{"widget": "date"}'/></td>
+                                        <td class="text-center">
+                                            <span t-if="record.state == 'draft'" class="badge rounded-pill bg-secondary px-3 py-1.5">Draft</span>
+                                            <span t-elif="record.state == 'submitted'" class="badge rounded-pill bg-warning px-3 py-1.5">Menunggu Validasi</span>
+                                            <span t-elif="record.state == 'approved'" class="badge rounded-pill bg-success px-3 py-1.5">Disetujui</span>
+                                            <span t-elif="record.state == 'rejected'" class="badge rounded-pill bg-danger px-3 py-1.5">Ditolak</span>
+                                        </td>
+                                        <td class="text-end pe-4">
+                                            <a t-attf-href="/my/rps/#{record.id}" class="btn btn-sm btn-emerald-outline rounded-pill px-3">
+                                                <i class="fa fa-folder-open me-1"/> Buka RPS
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </t>
+                                <tr t-if="not rps_records">
+                                    <td colspan="7" class="text-center py-5 text-slate-400 italic">
+                                        <i class="fa fa-inbox fa-3x d-block mb-3 opacity-50"/>
+                                        Belum ada dokumen RPS yang ditugaskan kepada Anda.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div t-if="pager" class="d-flex justify-content-center mt-4">
+                    <t t-call="portal.pager"/>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- RPS Detail Template -->
+    <template id="portal_rps_detail_page" name="RPS Detail Page">
+        <t t-call="portal.portal_layout">
+            <div id="sirita_rps_detail_container" class="container mt-4 mb-5">
+                <!-- Page Header Card -->
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white">
+                    <div class="card-body p-4 border-start border-emerald border-5">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <span class="badge bg-emerald-light text-emerald px-3 py-1.5 rounded-pill mb-2"><t t-esc="rps.kode_mk"/></span>
+                                <h2 class="fw-bold text-slate-800 mb-1"><t t-esc="rps.matkul_id.name"/></h2>
+                                <p class="text-slate-500 mb-0">
+                                    <i class="fa fa-graduation-cap me-1"/> <t t-esc="rps.prodi_id.name"/> • 
+                                    <i class="fa fa-book me-1"/> <t t-esc="rps.sks"/> SKS • 
+                                    <i class="fa fa-calendar me-1"/> <span t-field="rps.tanggal_penyusunan" t-options='{"widget": "date"}'/>
+                                </p>
+                            </div>
+                            <div class="col-md-auto text-md-end mt-3 mt-md-0 d-flex gap-2 align-items-center">
+                                <a t-if="rps.state == 'draft'" t-attf-href="/my/rps/#{rps.id}/submit_rps" class="btn btn-emerald px-4 py-2 rounded-pill fw-bold" onclick="return confirm('Apakah Anda yakin ingin mengajukan RPS ini untuk divalidasi?')">
+                                    <i class="fa fa-paper-plane me-1"/> Ajukan Validasi
+                                </a>
+                                <span t-if="rps.state == 'draft'" class="badge rounded-pill bg-secondary px-3 py-2 fs-6">Draft</span>
+                                <span t-elif="rps.state == 'submitted'" class="badge rounded-pill bg-warning px-3 py-2 fs-6">Menunggu Validasi</span>
+                                <span t-elif="rps.state == 'approved'" class="badge rounded-pill bg-success px-3 py-2 fs-6">Disetujui</span>
+                                <span t-elif="rps.state == 'rejected'" class="badge rounded-pill bg-danger px-3 py-2 fs-6">Ditolak</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content Grid -->
+                <div class="row g-4">
+                    <!-- Left Sidebar (Dosen & Koordinator) -->
+                    <div class="col-lg-4">
+                        <div class="card border-0 shadow-sm rounded-4 mb-4 p-4 bg-white">
+                            <h5 class="fw-bold text-slate-800 mb-3 border-bottom pb-2">
+                                <i class="fa fa-users text-emerald me-2"/>Tim Penyusun
+                            </h5>
+                            <div class="mb-4">
+                                <small class="text-slate-400 d-block text-uppercase fw-bold mb-2" style="font-size: 0.75rem;">Koordinator MK</small>
+                                <div class="d-flex align-items-center">
+                                    <img t-if="rps.koordinator_id.image_128" t-att-src="image_data_uri(rps.koordinator_id.image_128)" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;"/>
+                                    <div t-else="" class="rounded-circle bg-emerald text-white d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                        <i class="fa fa-user"/>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-slate-800" style="font-size: 0.9rem;"><t t-esc="rps.koordinator_id.name"/></div>
+                                        <small class="text-slate-400"><t t-esc="rps.koordinator_id.work_email or 'No Email'"/></small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <small class="text-slate-400 d-block text-uppercase fw-bold mb-2" style="font-size: 0.75rem;">Anggota Tim Pengembang</small>
+                                <div class="d-flex flex-column gap-3">
+                                    <t t-foreach="rps.dosen_ids" t-as="dosen">
+                                        <div class="d-flex align-items-center">
+                                            <img t-if="dosen.image_128" t-att-src="image_data_uri(dosen.image_128)" class="rounded-circle me-2" style="width: 35px; height: 35px; object-fit: cover;"/>
+                                            <div t-else="" class="rounded-circle bg-light text-slate-600 d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px;">
+                                                <i class="fa fa-user"/>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold text-slate-700" style="font-size: 0.85rem;"><t t-esc="dosen.name"/></div>
+                                                <small class="text-slate-400" style="font-size: 0.75rem;"><t t-esc="dosen.work_email or 'No Email'"/></small>
+                                            </div>
+                                        </div>
+                                    </t>
+                                    <div t-if="not rps.dosen_ids" class="text-slate-400 italic small">Belum ada tim pendukung.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Metode Pembelajaran Card -->
+                        <div class="card border-0 shadow-sm rounded-4 mb-4 p-4 bg-white">
+                            <h5 class="fw-bold text-slate-800 mb-3 border-bottom pb-2">
+                                <i class="fa fa-graduation-cap text-emerald me-2"/>Metode Pembelajaran Utama
+                            </h5>
+                            <div class="d-flex flex-wrap gap-2">
+                                <t t-foreach="rps.metode_ids" t-as="m">
+                                    <span class="badge bg-emerald-light text-emerald rounded-pill px-3 py-2 fw-semibold" style="font-size: 0.8rem;"><t t-esc="m.name"/></span>
+                                </t>
+                                <div t-if="not rps.metode_ids" class="text-slate-400 italic small">Belum ada metode pembelajaran utama yang dipilih.</div>
+                            </div>
+                        </div>
+
+                        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                            <h5 class="fw-bold text-slate-800 mb-3 border-bottom pb-2">
+                                <i class="fa fa-desktop text-emerald me-2"/>Media Perkuliahan
+                            </h5>
+                            <div class="mb-3">
+                                <small class="text-slate-400 d-block text-uppercase fw-bold" style="font-size: 0.75rem;">Perangkat Lunak</small>
+                                <span class="text-slate-700"><t t-esc="rps.media_software or '-'"/></span>
+                            </div>
+                            <div>
+                                <small class="text-slate-400 d-block text-uppercase fw-bold" style="font-size: 0.75rem;">Perangkat Keras</small>
+                                <span class="text-slate-700"><t t-esc="rps.media_hardware or '-'"/></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column (Tabbed Content) -->
+                    <div class="col-lg-8">
+                        <ul class="nav nav-pills custom-emerald-pills mb-4" id="rpsDetailTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active rounded-pill px-4" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="true">
+                                    Deskripsi &amp; Pustaka
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link rounded-pill px-4" id="cpmk-tab" data-bs-toggle="tab" data-bs-target="#cpmk" type="button" role="tab" aria-controls="cpmk" aria-selected="false">
+                                    Capaian (CPMK)
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link rounded-pill px-4" id="weekly-tab" data-bs-toggle="tab" data-bs-target="#weekly" type="button" role="tab" aria-controls="weekly" aria-selected="false">
+                                    Rencana Mingguan
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content" id="rpsDetailTabContent">
+                            <!-- Overview Tab -->
+                            <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+                                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+                                    <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                                        <h4 class="fw-bold text-slate-800 mb-0">Deskripsi Mata Kuliah</h4>
+                                        <button t-if="rps.state == 'draft'" class="btn btn-sm btn-emerald-outline rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editOverviewModal">
+                                            <i class="fa fa-pencil me-1"/> Edit Deskripsi &amp; Media
+                                        </button>
+                                    </div>
+                                    <p class="text-slate-600 line-height-relaxed mb-0"><t t-esc="rps.deskripsi or 'Belum diisi Deskripsi Mata Kuliah.'" html="True"/></p>
+                                </div>
+
+                                <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                                    <h4 class="fw-bold text-slate-800 mb-3 border-bottom pb-2">Pustaka / Referensi</h4>
+                                    <div class="row g-4">
+                                        <div class="col-md-6">
+                                            <div class="p-3 bg-light rounded-3 h-100">
+                                                <h6 class="fw-bold text-emerald mb-2"><i class="fa fa-book me-1"/> Pustaka Utama</h6>
+                                                <p class="text-slate-600 small mb-0"><t t-esc="rps.pustaka_utama or 'Belum diisi Pustaka Utama.'" html="True"/></p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="p-3 bg-light rounded-3 h-100">
+                                                <h6 class="fw-bold text-secondary mb-2"><i class="fa fa-book me-1"/> Pustaka Pendukung</h6>
+                                                <p class="text-slate-600 small mb-0"><t t-esc="rps.pustaka_pendukung or 'Belum diisi Pustaka Pendukung.'" html="True"/></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- CPMK Tab -->
+                            <div class="tab-pane fade" id="cpmk" role="tabpanel" aria-labelledby="cpmk-tab">
+                                <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+                                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+                                        <h5 class="fw-bold text-slate-800 mb-0">Capaian Pembelajaran Mata Kuliah (CPMK)</h5>
+                                        <button t-if="rps.state == 'draft'" class="btn btn-sm btn-emerald rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#addCpmkModal">
+                                            <i class="fa fa-plus me-1"/> Tambah CPMK
+                                        </button>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0 sirita-custom-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>KODE</th>
+                                                    <th>DESKRIPSI CAPAIAN MATA KULIAH (CPMK)</th>
+                                                    <th class="text-center">BOBOT</th>
+                                                    <th>CPL YANG DIPENUHI</th>
+                                                    <th t-if="rps.state == 'draft'" class="text-end pe-4">AKSI</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <t t-foreach="rps.cpmk_ids" t-as="cpmk">
+                                                    <tr>
+                                                        <td><span class="badge bg-emerald-light text-emerald fw-bold"><t t-esc="cpmk.kode"/></span></td>
+                                                        <td class="text-slate-700" style="max-width: 300px;"><t t-esc="cpmk.name"/></td>
+                                                        <td class="text-center fw-bold text-slate-800"><t t-esc="cpmk.bobot"/>%</td>
+                                                        <td>
+                                                            <t t-foreach="cpmk.cpl_ids" t-as="cpl">
+                                                                <span class="badge bg-light text-slate-600 border me-1" t-att-title="cpl.name"><t t-esc="cpl.kode"/></span>
+                                                            </t>
+                                                        </td>
+                                                        <td t-if="rps.state == 'draft'" class="text-end pe-4">
+                                                            <button class="btn btn-sm btn-emerald-outline rounded-circle me-1 edit-cpmk-btn"
+                                                                    t-att-data-id="cpmk.id"
+                                                                    t-att-data-kode="cpmk.kode"
+                                                                    t-att-data-name="cpmk.name"
+                                                                    t-att-data-bobot="cpmk.bobot"
+                                                                    t-att-data-cpl-ids="str(cpmk.cpl_ids.ids)"
+                                                                    data-bs-toggle="modal" data-bs-target="#editCpmkModal">
+                                                                <i class="fa fa-pencil"/>
+                                                            </button>
+                                                            <a t-attf-href="/my/rps/#{rps.id}/delete_cpmk/#{cpmk.id}" class="btn btn-sm btn-danger rounded-circle" onclick="return confirm('Apakah Anda yakin ingin menghapus CPMK ini?')">
+                                                                <i class="fa fa-trash"/>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                </t>
+                                                <tr t-if="not rps.cpmk_ids">
+                                                    <td colspan="5" class="text-center py-4 text-slate-400 italic">Belum ada CPMK terdaftar.</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Weekly Tab -->
+                            <div class="tab-pane fade" id="weekly" role="tabpanel" aria-labelledby="weekly-tab">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h4 class="fw-bold text-slate-800 mb-0">Rencana Pertemuan Mingguan</h4>
+                                    <button t-if="rps.state == 'draft'" class="btn btn-sm btn-emerald rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#addWeeklyModal">
+                                        <i class="fa fa-plus me-1"/> Tambah Pertemuan
+                                    </button>
+                                </div>
+                                <div class="d-flex flex-column gap-3">
+                                    <t t-foreach="rps.weekly_ids" t-as="week">
+                                        <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+                                            <div class="card-header bg-light d-flex justify-content-between align-items-center py-3 px-4 border-bottom-0">
+                                                <h6 class="fw-bold text-emerald mb-0"><i class="fa fa-calendar-check-o me-2"/> Pertemuan Ke-<t t-esc="week.week"/></h6>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <span t-if="week.bobot > 0" class="badge bg-emerald-light text-emerald px-2 py-1">Bobot Nilai: <t t-esc="week.bobot"/>%</span>
+                                                    <t t-if="rps.state == 'draft'">
+                                                        <button class="btn btn-xs btn-emerald-outline edit-week-btn"
+                                                                t-att-data-id="week.id"
+                                                                t-att-data-week="week.week"
+                                                                t-att-data-sub-cpmk="week.sub_cpmk"
+                                                                t-att-data-bahan-kajian="week.bahan_kajian"
+                                                                t-att-data-metode="week.metode_pembelajaran"
+                                                                t-att-data-indikator="week.indikator"
+                                                                t-att-data-kriteria="week.kriteria"
+                                                                t-att-data-bobot="week.bobot"
+                                                                t-att-data-cpmk-ids="str(week.cpmk_ids.ids)"
+                                                                data-bs-toggle="modal" data-bs-target="#editWeeklyModal">
+                                                            <i class="fa fa-pencil"/> Edit
+                                                        </button>
+                                                        <a t-attf-href="/my/rps/#{rps.id}/delete_weekly/#{week.id}" class="btn btn-xs btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus rencana pertemuan ini?')">
+                                                            <i class="fa fa-trash"/> Hapus
+                                                        </a>
+                                                    </t>
+                                                </div>
+                                            </div>
+                                            <div class="card-body p-4">
+                                                <div class="mb-3">
+                                                    <h6 class="fw-bold text-slate-800 mb-1" style="font-size: 0.9rem;">Kemampuan Akhir (Sub-CPMK)</h6>
+                                                    <p class="text-slate-600 mb-0 small"><t t-esc="week.sub_cpmk"/></p>
+                                                </div>
+                                                <div class="row g-3">
+                                                    <div class="col-md-6" t-if="week.bahan_kajian">
+                                                        <small class="text-slate-400 d-block text-uppercase fw-bold mb-1" style="font-size: 0.7rem;">Bahan Kajian</small>
+                                                        <p class="text-slate-700 small mb-0"><t t-esc="week.bahan_kajian"/></p>
+                                                    </div>
+                                                    <div class="col-md-6" t-if="week.metode_pembelajaran">
+                                                        <small class="text-slate-400 d-block text-uppercase fw-bold mb-1" style="font-size: 0.7rem;">Metode Pembelajaran</small>
+                                                        <p class="text-slate-700 small mb-0"><t t-esc="week.metode_pembelajaran"/></p>
+                                                    </div>
+                                                    <div class="col-md-6" t-if="week.indikator">
+                                                        <small class="text-slate-400 d-block text-uppercase fw-bold mb-1" style="font-size: 0.7rem;">Indikator Penilaian</small>
+                                                        <p class="text-slate-700 small mb-0"><t t-esc="week.indikator"/></p>
+                                                    </div>
+                                                    <div class="col-md-6" t-if="week.kriteria">
+                                                        <small class="text-slate-400 d-block text-uppercase fw-bold mb-1" style="font-size: 0.7rem;">Kriteria &amp; Bentuk Penilaian</small>
+                                                        <p class="text-slate-700 small mb-0"><t t-esc="week.kriteria"/></p>
+                                                    </div>
+                                                </div>
+                                                <div class="mt-3 border-top pt-3" t-if="week.cpmk_ids">
+                                                    <small class="text-slate-400 d-block text-uppercase fw-bold mb-1" style="font-size: 0.7rem;">Referensi CPMK</small>
+                                                    <t t-foreach="week.cpmk_ids" t-as="cpmk">
+                                                        <span class="badge bg-emerald-light text-emerald me-1"><t t-esc="cpmk.kode"/></span>
+                                                    </t>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </t>
+                                    <div t-if="not rps.weekly_ids" class="text-slate-400 italic text-center py-5">Belum ada materi rencana mingguan terdaftar.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modals Section -->
+
+                <!-- Edit Overview Modal -->
+                <div t-if="rps.state == 'draft'" class="modal fade" id="editOverviewModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content border-0 rounded-4 shadow">
+                            <form t-attf-action="/my/rps/#{rps.id}/update_overview" method="post">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <div class="modal-header bg-emerald text-white rounded-top-4 border-0 py-3 px-4">
+                                    <h5 class="modal-title fw-bold"><i class="fa fa-pencil-square-o me-2"/>Edit Deskripsi &amp; Media</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body p-4">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-slate-700">Deskripsi Mata Kuliah</label>
+                                        <textarea class="form-control rounded-3" name="deskripsi" rows="4" placeholder="Tuliskan deskripsi/gambaran umum mata kuliah..."><t t-esc="rps.deskripsi"/></textarea>
+                                    </div>
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold text-slate-700">Pustaka Utama</label>
+                                            <textarea class="form-control rounded-3" name="pustaka_utama" rows="3" placeholder="Referensi utama..."><t t-esc="rps.pustaka_utama"/></textarea>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold text-slate-700">Pustaka Pendukung</label>
+                                            <textarea class="form-control rounded-3" name="pustaka_pendukung" rows="3" placeholder="Referensi pendukung..."><t t-esc="rps.pustaka_pendukung"/></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold text-slate-700">Media Perangkat Lunak</label>
+                                            <input type="text" class="form-control rounded-3" name="media_software" t-att-value="rps.media_software" placeholder="Misal: Odoo, VS Code, Browser"/>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold text-slate-700">Media Perangkat Keras</label>
+                                            <input type="text" class="form-control rounded-3" name="media_hardware" t-att-value="rps.media_hardware" placeholder="Misal: Laptop, Proyektor"/>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-slate-700 d-block">Metode Pembelajaran Utama</label>
+                                        <div class="d-flex flex-wrap gap-3 p-3 bg-light rounded-3">
+                                            <t t-foreach="metodes" t-as="m">
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="checkbox" name="metode_ids" t-att-id="'metode_' + str(m.id)" t-att-value="m.id" t-att-checked="m.id in rps.metode_ids.ids"/>
+                                                    <label class="form-check-label small" t-att-for="'metode_' + str(m.id)"><t t-esc="m.name"/></label>
+                                                </div>
+                                            </t>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer border-top-0 px-4 pb-4 pt-0">
+                                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                                    <button type="submit" class="btn btn-emerald rounded-pill px-4 fw-bold">Simpan Perubahan</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add CPMK Modal -->
+                <div t-if="rps.state == 'draft'" class="modal fade" id="addCpmkModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content border-0 rounded-4 shadow">
+                            <form t-attf-action="/my/rps/#{rps.id}/update_cpmk" method="post">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <div class="modal-header bg-emerald text-white rounded-top-4 border-0 py-3 px-4">
+                                    <h5 class="modal-title fw-bold"><i class="fa fa-plus me-2"/>Tambah CPMK Baru</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body p-4">
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold text-slate-700">Kode CPMK</label>
+                                            <input type="text" class="form-control rounded-3" name="kode" required="1" placeholder="Contoh: CPMK-01"/>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold text-slate-700">Bobot (%)</label>
+                                            <input type="number" step="0.1" class="form-control rounded-3" name="bobot" required="1" value="0.0"/>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-slate-700">Deskripsi Capaian</label>
+                                        <textarea class="form-control rounded-3" name="name" rows="3" required="1" placeholder="Tulis deskripsi kemampuan akhir..."></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-slate-700 d-block">Pemenuhan CPL</label>
+                                        <div class="p-3 bg-light rounded-3" style="max-height: 200px; overflow-y: auto;">
+                                            <t t-foreach="cpls" t-as="c">
+                                                <div class="form-check mb-1">
+                                                    <input class="form-check-input" type="checkbox" name="cpl_ids" t-att-id="'add_cpl_' + str(c.id)" t-att-value="c.id"/>
+                                                    <label class="form-check-label small" t-att-for="'add_cpl_' + str(c.id)">
+                                                        <strong><t t-esc="c.kode"/></strong> - <t t-esc="c.name"/>
+                                                    </label>
+                                                </div>
+                                            </t>
+                                            <div t-if="not cpls" class="text-slate-400 small italic">Belum ada CPL untuk Prodi ini.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer border-top-0 px-4 pb-4 pt-0">
+                                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                                    <button type="submit" class="btn btn-emerald rounded-pill px-4 fw-bold">Tambah</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit CPMK Modal -->
+                <div t-if="rps.state == 'draft'" class="modal fade" id="editCpmkModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content border-0 rounded-4 shadow">
+                            <form t-attf-action="/my/rps/#{rps.id}/update_cpmk" method="post">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <input type="hidden" name="cpmk_id" id="edit_cpmk_id"/>
+                                <div class="modal-header bg-emerald text-white rounded-top-4 border-0 py-3 px-4">
+                                    <h5 class="modal-title fw-bold"><i class="fa fa-pencil me-2"/>Edit CPMK</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body p-4">
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold text-slate-700">Kode CPMK</label>
+                                            <input type="text" class="form-control rounded-3" name="kode" id="edit_cpmk_kode" required="1"/>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold text-slate-700">Bobot (%)</label>
+                                            <input type="number" step="0.1" class="form-control rounded-3" name="bobot" id="edit_cpmk_bobot" required="1"/>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-slate-700">Deskripsi Capaian</label>
+                                        <textarea class="form-control rounded-3" name="name" id="edit_cpmk_name" rows="3" required="1"></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-slate-700 d-block">Pemenuhan CPL</label>
+                                        <div class="p-3 bg-light rounded-3" style="max-height: 200px; overflow-y: auto;">
+                                            <t t-foreach="cpls" t-as="c">
+                                                <div class="form-check mb-1">
+                                                    <input class="form-check-input edit-cpl-checkbox" type="checkbox" name="cpl_ids" t-att-id="'edit_cpl_' + str(c.id)" t-att-value="c.id"/>
+                                                    <label class="form-check-label small" t-att-for="'edit_cpl_' + str(c.id)">
+                                                        <strong><t t-esc="c.kode"/></strong> - <t t-esc="c.name"/>
+                                                    </label>
+                                                </div>
+                                            </t>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer border-top-0 px-4 pb-4 pt-0">
+                                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                                    <button type="submit" class="btn btn-emerald rounded-pill px-4 fw-bold">Simpan</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add Weekly Modal -->
+                <div t-if="rps.state == 'draft'" class="modal fade" id="addWeeklyModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content border-0 rounded-4 shadow">
+                            <form t-attf-action="/my/rps/#{rps.id}/update_weekly" method="post">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <div class="modal-header bg-emerald text-white rounded-top-4 border-0 py-3 px-4">
+                                    <h5 class="modal-title fw-bold"><i class="fa fa-plus me-2"/>Tambah Rencana Mingguan</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body p-4">
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold text-slate-700">Pertemuan Ke-</label>
+                                            <input type="number" class="form-control rounded-3" name="week" required="1" value="1"/>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold text-slate-700">Bobot Penilaian (%)</label>
+                                            <input type="number" step="0.1" class="form-control rounded-3" name="bobot" required="1" value="0.0"/>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-slate-700">Kemampuan Akhir (Sub-CPMK)</label>
+                                        <textarea class="form-control rounded-3" name="sub_cpmk" rows="2" required="1" placeholder="Tuliskan Sub-CPMK..."></textarea>
+                                    </div>
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold text-slate-700">Bahan Kajian</label>
+                                            <textarea class="form-control rounded-3" name="bahan_kajian" rows="2" placeholder="Bahan kajian/materi perkuliahan..."></textarea>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold text-slate-700">Metode Pembelajaran</label>
+                                            <textarea class="form-control rounded-3" name="metode_pembelajaran" rows="2" placeholder="Metode/bentuk pembelajaran..."></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold text-slate-700">Indikator Penilaian</label>
+                                            <textarea class="form-control rounded-3" name="indikator" rows="2" placeholder="Indikator penilaian..."></textarea>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold text-slate-700">Kriteria &amp; Bentuk</label>
+                                            <textarea class="form-control rounded-3" name="kriteria" rows="2" placeholder="Kriteria dan bentuk penilaian..."></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-slate-700 d-block">Referensi CPMK</label>
+                                        <div class="d-flex flex-wrap gap-3 p-3 bg-light rounded-3">
+                                            <t t-foreach="rps.cpmk_ids" t-as="ck">
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="checkbox" name="cpmk_ids" t-att-id="'add_w_cpmk_' + str(ck.id)" t-att-value="ck.id"/>
+                                                    <label class="form-check-label small" t-att-for="'add_w_cpmk_' + str(ck.id)"><t t-esc="ck.kode"/></label>
+                                                </div>
+                                            </t>
+                                            <div t-if="not rps.cpmk_ids" class="text-slate-400 small italic">Belum ada CPMK untuk dirujuk.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer border-top-0 px-4 pb-4 pt-0">
+                                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                                    <button type="submit" class="btn btn-emerald rounded-pill px-4 fw-bold">Tambah</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Weekly Modal -->
+                <div t-if="rps.state == 'slate' or rps.state == 'draft'" class="modal fade" id="editWeeklyModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content border-0 rounded-4 shadow">
+                            <form t-attf-action="/my/rps/#{rps.id}/update_weekly" method="post">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <input type="hidden" name="week_id" id="edit_week_id"/>
+                                <div class="modal-header bg-emerald text-white rounded-top-4 border-0 py-3 px-4">
+                                    <h5 class="modal-title fw-bold"><i class="fa fa-pencil me-2"/>Edit Rencana Mingguan</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body p-4">
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold text-slate-700">Pertemuan Ke-</label>
+                                            <input type="number" class="form-control rounded-3" name="week" id="edit_week_num" required="1"/>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold text-slate-700">Bobot Penilaian (%)</label>
+                                            <input type="number" step="0.1" class="form-control rounded-3" name="bobot" id="edit_week_bobot" required="1"/>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-slate-700">Kemampuan Akhir (Sub-CPMK)</label>
+                                        <textarea class="form-control rounded-3" name="sub_cpmk" id="edit_week_sub_cpmk" rows="2" required="1"></textarea>
+                                    </div>
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold text-slate-700">Bahan Kajian</label>
+                                            <textarea class="form-control rounded-3" name="bahan_kajian" id="edit_week_bahan_kajian" rows="2"></textarea>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold text-slate-700">Metode Pembelajaran</label>
+                                            <textarea class="form-control rounded-3" name="metode_pembelajaran" id="edit_week_metode" rows="2"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold text-slate-700">Indikator Penilaian</label>
+                                            <textarea class="form-control rounded-3" name="indikator" id="edit_week_indikator" rows="2"></textarea>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold text-slate-700">Kriteria &amp; Bentuk</label>
+                                            <textarea class="form-control rounded-3" name="kriteria" id="edit_week_kriteria" rows="2"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-slate-700 d-block">Referensi CPMK</label>
+                                        <div class="d-flex flex-wrap gap-3 p-3 bg-light rounded-3">
+                                            <t t-foreach="rps.cpmk_ids" t-as="ck">
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input edit-cpmk-checkbox" type="checkbox" name="cpmk_ids" t-att-id="'edit_w_cpmk_' + str(ck.id)" t-att-value="ck.id"/>
+                                                    <label class="form-check-label small" t-att-for="'edit_w_cpmk_' + str(ck.id)"><t t-esc="ck.kode"/></label>
+                                                </div>
+                                            </t>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer border-top-0 px-4 pb-4 pt-0">
+                                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                                    <button type="submit" class="btn btn-emerald rounded-pill px-4 fw-bold">Simpan</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <script type="text/javascript">
+                    document.addEventListener("DOMContentLoaded", function() {
+                        // Handle CPMK Edit Population
+                        var editCpmkBtns = document.querySelectorAll('.edit-cpmk-btn');
+                        editCpmkBtns.forEach(function(btn) {
+                            btn.addEventListener('click', function() {
+                                document.getElementById('edit_cpmk_id').value = btn.getAttribute('data-id');
+                                document.getElementById('edit_cpmk_kode').value = btn.getAttribute('data-kode');
+                                document.getElementById('edit_cpmk_bobot').value = btn.getAttribute('data-bobot');
+                                document.getElementById('edit_cpmk_name').value = btn.getAttribute('data-name');
+                                
+                                var cplIds = JSON.parse(btn.getAttribute('data-cpl-ids') || '[]');
+                                var checkboxes = document.querySelectorAll('.edit-cpl-checkbox');
+                                checkboxes.forEach(function(cb) {
+                                    cb.checked = cplIds.includes(parseInt(cb.value));
+                                });
+                            });
+                        });
+
+                        // Handle Weekly Edit Population
+                        var editWeekBtns = document.querySelectorAll('.edit-week-btn');
+                        editWeekBtns.forEach(function(btn) {
+                            btn.addEventListener('click', function() {
+                                document.getElementById('edit_week_id').value = btn.getAttribute('data-id');
+                                document.getElementById('edit_week_num').value = btn.getAttribute('data-week');
+                                document.getElementById('edit_week_bobot').value = btn.getAttribute('data-bobot');
+                                document.getElementById('edit_week_sub_cpmk').value = btn.getAttribute('data-sub-cpmk');
+                                document.getElementById('edit_week_bahan_kajian').value = btn.getAttribute('data-bahan-kajian');
+                                document.getElementById('edit_week_metode').value = btn.getAttribute('data-metode');
+                                document.getElementById('edit_week_indikator').value = btn.getAttribute('data-indikator');
+                                document.getElementById('edit_week_kriteria').value = btn.getAttribute('data-kriteria');
+                                
+                                var cpmkIds = JSON.parse(btn.getAttribute('data-cpmk-ids') || '[]');
+                                var checkboxes = document.querySelectorAll('.edit-cpmk-checkbox');
+                                checkboxes.forEach(function(cb) {
+                                    cb.checked = cpmkIds.includes(parseInt(cb.value));
+                                });
+                            });
+                        });
+                        
+                        // Maintain tab state after redirect (anchor hash)
+                        var hash = window.location.hash;
+                        if (hash) {
+                            var tabTrigger = document.querySelector('button[data-bs-target="' + hash + '"]');
+                            if (tabTrigger) {
+                                var tab = new bootstrap.Tab(tabTrigger);
+                                tab.show();
+                            }
+                        }
+                    });
+                </script>
+            </div>
+        </t>
+    </template>
+</odoo>
